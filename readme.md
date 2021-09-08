@@ -1,5 +1,4 @@
 ## DeepLearningClassificationIntermediate
-
 Example showing the use of a pretrained classification network together with an EdgeMatcher to inspect multiple image regions.
 See also the available tutorials on the [SICK support portal](https://supportportal.sick.com/).
 
