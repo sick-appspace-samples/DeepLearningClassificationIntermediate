@@ -20,21 +20,23 @@
 ------------------------------------------------------------------------------]]
 local viewer = View.create()
 
+local colors =
+{
+  BadContact = {255, 20, 20},
+  GoodContact= {20, 255, 20},
+  NoContactClean = {20, 255, 255},
+  NoContactDirty = {255, 255, 20},
+  NoPad = {255, 20, 20},
+  ShortCircuit = {255, 20, 20}
+}
+
+---@param patch Shape
+---@param label string
 local function drawClassifiedPatch(patch, label)
-  local colors =
-  {
-    BadContact = {255, 20, 20},
-    GoodContact= {20, 255, 20},
-    NoContactClean = {20, 255, 255},
-    NoContactDirty = {255, 255, 20},
-    NoPad = {255, 20, 20},
-    ShortCircuit = {255, 20, 20}
-  }
   -- Select color based on class label
+  ---@type int
   local r, g, b = table.unpack(colors[label])
-  local patchDecorator = View.ShapeDecoration.create()
-  patchDecorator:setFillColor(r, g, b, 60)
-  patchDecorator:setLineColor(r, g, b, 255)
+  local patchDecorator = View.ShapeDecoration.create():setFillColor(r, g, b, 60):setLineColor(r, g, b, 255)
   viewer:addShape(patch, patchDecorator)
 
   -- Calculate placement relative rectangle and put label in viewer
@@ -43,27 +45,27 @@ local function drawClassifiedPatch(patch, label)
   local boxBottom = center:add(Point.create(-fontSize/3, height/2 + 10))
   local transform = Transform.createRigid2D(rotation, 0, 0, center)
   local textPosition = boxBottom:transform(transform)
-  local textDecoration = View.TextDecoration.create()
-  textDecoration:setSize(fontSize)
-  textDecoration:setColor(255,255,255)
-  textDecoration:setPosition(textPosition:getX(), textPosition:getY())
-  textDecoration:setRotation(-math.pi/2 - rotation)
+  local textDecoration = View.TextDecoration.create():setSize(fontSize):setColor(255,255,255)
+  textDecoration:setPosition(textPosition:getX(), textPosition:getY()):setRotation(-math.pi/2 - rotation)
   textDecoration:setHorizontalAlignment("LEFT")
   viewer:addText(label, textDecoration)
 end
 
+---@param image Image
+---@param contours Shape[]
+---@param patches? Shape[]
 local function drawImageWithOverlays(image, contours, patches)
+  ---@param shapes Shape[]
+  ---@param r int
+  ---@param g int
+  ---@param b int
   local function drawShapes(shapes, r, g, b)
-    local patchDecorator = View.ShapeDecoration.create()
-    patchDecorator:setFillColor(r, g, b, 60)
-    patchDecorator:setLineColor(r, g, b, 255)
+    local patchDecorator = View.ShapeDecoration.create():setFillColor(r, g, b, 60):setLineColor(r, g, b, 255)
     viewer:addShape(shapes, patchDecorator)
   end
 
   -- Display the teach configuration
-  local locatorDecorator = View.ShapeDecoration.create()
-  locatorDecorator:setLineColor(20, 20, 255, 255)
-  locatorDecorator:setLineWidth(5)
+  local locatorDecorator = View.ShapeDecoration.create():setLineColor(20, 20, 255, 255):setLineWidth(5)
 
   viewer:addImage(image)
   viewer:addShape(contours, locatorDecorator)
@@ -73,6 +75,9 @@ local function drawImageWithOverlays(image, contours, patches)
   viewer:present("ASSURED")
 end
 
+---@param teachImage Image
+---@return Image.Matching.EdgeMatcher
+---@return Image.Fixture
 local function teachPart(teachImage)
   -- Construct the input patches for classification in
   -- the coordinate system of the teach image.
@@ -81,6 +86,7 @@ local function teachPart(teachImage)
   local height = 1.8*deltaX             -- The height of the inspected areas
   local width = deltaX + 2*5            -- The width of the inspected areas
   local jointCount = 12                 -- Number of joint regions to place
+  ---@type Shape[]
   local patches = {}
   for i = 1, jointCount do
     local rectangle = Shape.createRectangle(center, width, height)
@@ -96,6 +102,7 @@ local function teachPart(teachImage)
   matcher:setMaxMatches(1)
   matcher:setEdgeThreshold(50)
   local teachPose = matcher:teach(teachImage, teachRegion)
+  ---@type Shape[]
   local teachContours = matcher:getModelContours():transform(teachPose)
 
   -- Attach a fixture to handle the transformation of the patch regions
@@ -111,6 +118,10 @@ local function teachPart(teachImage)
   return matcher, fixture
 end
 
+---@param matcher Image.Matching.EdgeMatcher
+---@param fixture Image.Fixture
+---@param liveImage Image
+---@return Shape[]
 local function locatePart(matcher, fixture, liveImage)
   -- Locate part in the new image using the matcher
   local matchPoses = matcher:match(liveImage)
@@ -125,11 +136,16 @@ local function locatePart(matcher, fixture, liveImage)
   end
 
   -- Display some feedback on the localized part
+  ---@type Shape[]
   local liveContours = matcher:getModelContours():transform(matchPoses[1])
   drawImageWithOverlays(liveImage, liveContours)
   return patches
 end
 
+---@param dnn MachineLearning.DeepNeuralNetwork
+---@param image Image
+---@param patch Shape
+---@return string
 local function runInference(dnn, image, patch)
   local patchImage = image:cropRectify(patch) -- Extract the input patch
   dnn:setInputImage(patchImage)               -- Prepare image for prediction
