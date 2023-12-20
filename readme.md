@@ -1,11 +1,14 @@
 ## DeepLearningClassificationIntermediate
+
 Example showing the use of a pretrained classification network together with an EdgeMatcher to inspect multiple image regions.
 See also the available tutorials on the [SICK support portal](https://supportportal.sick.com/).
 
 ### Disclaimer
+
 This sample shows the use of a licensed API and will therefore only work for a limited time on a non-licensed device/emulator.
 
 ### How to Run
+
 Starting this sample is possible either by running the App (F5) or
 debugging (F7+F10). Setting breakpoint on the first row inside the 'main'
 function allows debugging step-by-step after 'Engine.OnStarted' event.
@@ -16,7 +19,9 @@ required. For example SIM1012 with latest firmware. Alternatively the Emulator
 in AppStudio 3.0 or higher can be used.
 
 ### More Information
+
 Tutorial "Algorithms - Deep Learning"
 
 ### Topics
-Algorithm, Image-2D, Machine-Learning, Deep-Learning, Neural-Network, Sample, SICK-AppSpace, EdgeMatcher, Locator, Matching
+
+algorithm, image-2d, machine-learning, deep-learning, neural-network, sample, sick-appspace, edgematcher, locator, matching
